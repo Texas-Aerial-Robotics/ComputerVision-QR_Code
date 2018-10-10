@@ -3,3 +3,9 @@
 # Don't forget to install Open CV and Pygame
 The code searches for the image in the directory that your python file exists in, so be sure to save the webcam image into that specific directory.
 
+
+#For qrCode.cpp
+To compile: ```g++ -o qrCode qrCode.cpp `pkg-config opencv --cflags --libs` -lzbar```
+To run: ```./qrCode```
+
+
