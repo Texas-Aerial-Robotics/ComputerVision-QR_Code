@@ -2,8 +2,13 @@
     project(cmake_and_cuda LANGUAGES CXX CUDA)
      
     include(CTest)
+    
+    execute_process (
+      COMMAND bash -c "cd build;pwd -P"
+      OUTPUT_VARIABLE AWD
+    )
      
-    add_library(qr STATIC qr_combinatorics.cu)
+    add_library(qr STATIC ${AWD}/../qr_combinatorics.cu)
      
     # Request that qr be built with -std=c++11
     # As this is a public compile feature anything that links to 

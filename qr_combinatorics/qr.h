@@ -14,8 +14,21 @@
 #define QR_PORTION_SIZE (QR_SIZE / 4)
 
 namespace internal {
-  void compute(std::vector<int32_t>, int orientation, int type);
-  std::tuple<int, int> check_corner(std::vector<int32_t>, int width);
+  enum class orientation_t : uint8_t {
+    deg_0 = 0,
+    deg_90,
+    deg_180,
+    deg_270
+  };
+  enum class corner_type_t : uint8_t {
+    top_left = 0,
+    top_right,
+    bottom_right,
+    bottom_left
+  };
+  //void compute(std::vector<int32_t>, orientation_t orientation, corner_type_t type);
+  std::tuple<orientation_t, corner_type_t> check_corner(std::vector<int32_t>, int width);
+  std::vector<uint16_t> compute(std::vector<int32_t>, int, orientation_t, corner_type_t);
 }
 
 template <int width>
@@ -26,6 +39,7 @@ public:
       data[i] = 0; // sets all values to zeroes to ensure no issues
     }
   }
+  
   inline ~qr_comb_t() {
     
   }
@@ -42,7 +56,7 @@ public:
       if(b)
         qr->data[index / 32] |= 1 << (index % 32);
       else
-        qr->data[index / 32] &= 0 << (index % 32);
+        qr->data[index / 32] &= ~(1 << (index % 32));
       return b;
     }
   };
@@ -61,26 +75,30 @@ public:
     // Precompute
 #ifndef __NVCC__ // nvcc doesn't support structured bindings (as far as I can tell)
     auto [orientation, cornertype] = internal::check_corner(d, width);
-    printf("%i", orientation);
     
-    internal::compute(d, orientation, cornertype);
+    /*return*/ internal::compute(d, width, orientation, cornertype);
 #endif
+    //return {};
   }
 private:
-  inline int qr_value_at(int x, int y, int orientation){
-    int index = 0;
-    if(orientation == 0){ // Top left
-      index = (y * (width) + x);
-    } else if(orientation == 1){ // Top right
-      index = ((width - y - 1) * (width) + x);
-    } else if(orientation == 2){ // Bottom left
-      index = (y * (width) + (width - x - 1));
-    } else { // Bottom right
-      index = ((width - y - 1) * (width) + (width - x - 1));
-    }
-    return (data[index / 32] >> (index % 32)) & 1; // unpack bit from qr_portion
-  }
   std::array<int32_t, width> data;
 };
+
+#define HELPER1(m, width, d) auto qr_value_at = [&](int x, int y, int orientation){ \
+    return qr_value_at_##m(x, y, orientation, width, d); \
+  }; \
+  auto black = [&](int y, int x, int k, bool m = true){ \
+    return qr_value_at(x, y, k) != (m ? 1 : 0); \
+  };
+  
+#define HELPER2 auto printerr = [&](int y, int x, int k){\
+    for(int i = 0; i < width; i++){\
+      for(int j = 0; j < width; j++){\
+        if(i == x && j == y) printf((qr_value_at(i, j, k) == 1) ? "!" : "|");\
+        else printf((qr_value_at(i, j, k) == 1) ? "." : " ");\
+      }\
+      printf("\n");\
+    }\
+  };
 
 #endif

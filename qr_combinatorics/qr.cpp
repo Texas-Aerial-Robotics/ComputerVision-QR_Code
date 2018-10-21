@@ -1,36 +1,23 @@
 #include "qr.h"
 
-inline int qr_value_at_v(int x, int y, int orientation, int width, std::vector<int32_t> data){
+inline int qr_value_at_v(int y, int x, int orientation, int width, std::vector<int32_t> data){
   int index = 0;
   if(orientation == 0){ // Top left
     index = (y * (width) + x);
   } else if(orientation == 1){ // Top right
-    index = ((width - y - 1) * (width) + x);
-  } else if(orientation == 2){ // Bottom left
-    index = (y * (width) + (width - x - 1));
-  } else { // Bottom right
+    index = (x * width + (width - y - 1));
+  } else if(orientation == 2){ // Bottom right
     index = ((width - y - 1) * (width) + (width - x - 1));
+  } else { // Bottom left
+    index = ((width - x - 1) * width + y);
   }
   return (data[index / 32] >> (index % 32)) & 1; // unpack bit from qr_portion
 }
 
 // The second return value orientation describes the number of 90 degree turns taken for the corner to be at the top left
-std::tuple<int, int> internal::check_corner(std::vector<int32_t> d, int width){
-  auto qr_value_at = [&](int x, int y, int orientation){ // Helper function which returns qr code value at a point as 0 or 1.
-    return qr_value_at_v(x, y, orientation, width, d);
-  };
-  auto printerr = [&](int x, int y, int k){ // Helper function which prints qr code with relevant error point
-    for(int i = 0; i < width; i++){
-      for(int j = 0; j < width; j++){
-        if(i == x && j == y) printf("!");
-        else printf((qr_value_at(i, j, k) == 1) ? "." : " ");
-      }
-      printf("\n");
-    }
-  };
-  auto black = [&](int x, int y, int k, bool m = true){
-    return qr_value_at(x, y, k) != (m ? 1 : 0);
-  };
+std::tuple<internal::orientation_t, internal::corner_type_t> internal::check_corner(std::vector<int32_t> d, int width){
+  HELPER1(v, width, d)
+  HELPER2
   int orientation = 0;
   for(int k = 0; k < 4; k++){
     for(int i = 0; i < 7; i++){
@@ -44,19 +31,30 @@ std::tuple<int, int> internal::check_corner(std::vector<int32_t> d, int width){
         orientation = k;
         if(black(i, j, k, expected)) // TODO
           continue;
-        printerr(i, j, k);
         orientation = -1;
         break;
       }
-      if(orientation != -1) break;
+      if(orientation == -1) break;
     }
     if(orientation != -1) break;
   }
 
-  if(orientation == -1) return std::make_tuple(0, 2);
+  if(orientation == -1) return std::make_tuple(static_cast<orientation_t>(0), static_cast<corner_type_t>(2));
+  
+  bool right = true;
+  bool lower = true;
+  
+  for(int i = 7; i < width; i++){
+    if(black(i, 6, orientation, i % 2 != 1)){
+      right = false;
+    }
+    if(black(6, i, orientation, i % 2 != 1)){
+      lower = false;
+    }
+    if(!right && !lower) break;
+  }
 
-  bool right = black(8, 6, orientation) && black(10, 6, orientation);
-  bool lower = black(6, 8, orientation) && black(6, 10, orientation);
-
-  return std::make_tuple(orientation, (right && lower) ? 0 : ((right) ? 3 : 1));
+  return std::make_tuple(static_cast<orientation_t>(orientation), static_cast<corner_type_t>((right && lower) ? 0 : ((right) ? 3 : 1)));
 }
+
+

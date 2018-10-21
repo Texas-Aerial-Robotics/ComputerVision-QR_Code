@@ -16,6 +16,19 @@ std::string top_left =
 "XX X   XX X\n"
 "XXXXXXX   X";
 
+std::string bottom_right = 
+"X X XX  XX \n"
+"XXXXX  XXXX\n"
+"  X  X  XXX\n"
+"  X  X  X  \n"
+" X X  X X  \n"
+"X    XX XX \n"
+"XX X  XXX  \n"
+"XXXXXX  X  \n"
+"  X XX  X  \n"
+" XXXXX   X \n"
+"  X  X     \n";
+
 template <int I>
 void putstring(std::string test_string, qr_comb_t<I>& t){
   int x_offset = 0, y_offset = 0;
@@ -33,11 +46,13 @@ void putstring(std::string test_string, qr_comb_t<I>& t){
 }
 
 int main(){
-    qr_comb_t<12> t;
+    qr_comb_t<11> t, b;
     
     putstring(top_left, t);
+    putstring(bottom_right, b);
     
     t.compute();
+    b.compute();
     
     wait_for_cuda_end();
     return 0;
