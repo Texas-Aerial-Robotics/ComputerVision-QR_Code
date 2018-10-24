@@ -29,14 +29,13 @@ std::string bottom_right =
 " XXXXX   X \n"
 "  X  X     \n";
 
-template <int I>
-void putstring(std::string test_string, qr_comb_t<I>& t){
+void putstring(std::string test_string, qr_comb_t& t){
   int x_offset = 0, y_offset = 0;
    for(int i = 0; i < test_string.size(); i++){
       if(test_string[i] == ' ')
         x_offset++;
       else if(test_string[i] == 'X'){
-        t(x_offset, y_offset) = true;
+        t(x_offset, y_offset) = black;
         x_offset++;
       } else if(test_string[i] == '\n'){
         x_offset = 0;
@@ -46,14 +45,14 @@ void putstring(std::string test_string, qr_comb_t<I>& t){
 }
 
 int main(){
-    qr_comb_t<11> t, b;
+    qr_comb_t t(11), b(11);
     
     putstring(top_left, t);
     putstring(bottom_right, b);
     
-    t.compute();
+    //t.compute();
     b.compute();
     
-    wait_for_cuda_end();
+    //wait_for_cuda_end();
     return 0;
 }

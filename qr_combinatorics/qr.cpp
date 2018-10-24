@@ -1,60 +1,84 @@
 #include "qr.h"
+#include <functional>
 
-inline int qr_value_at_v(int y, int x, int orientation, int width, std::vector<int32_t> data){
-  int index = 0;
-  if(orientation == 0){ // Top left
-    index = (y * (width) + x);
-  } else if(orientation == 1){ // Top right
-    index = (x * width + (width - y - 1));
-  } else if(orientation == 2){ // Bottom right
-    index = ((width - y - 1) * (width) + (width - x - 1));
-  } else { // Bottom left
-    index = ((width - x - 1) * width + y);
-  }
-  return (data[index / 32] >> (index % 32)) & 1; // unpack bit from qr_portion
+std::vector<std::function<bool(int, int)> > masks = {
+  [](int i, int j) -> bool {return j % 3 == 0;},
+  [](int i, int j) -> bool {return (i + j) % 3 == 0;},
+  [](int i, int j) -> bool {return (i + j) % 2 == 0;},
+  [](int i, int j) -> bool {return i % 2 == 0;},
+  [](int i, int j) -> bool {return ((i * j) % 3 + i * j) % 2 == 0;},
+  [](int i, int j) -> bool {return ((i * j) % 3 + i + j) % 2 == 0;},
+  [](int i, int j) -> bool {return (i / 2 + j / 3) % 2 == 0;},
+  [](int i, int j) -> bool {return (i * j) % 2 + (i * j) % 3 == 0;}
+};
+
+uint8_t mask_v(int i, int j, int m){
+  return masks[m](i, j) ? 1 : 0;
 }
 
-// The second return value orientation describes the number of 90 degree turns taken for the corner to be at the top left
-std::tuple<internal::orientation_t, internal::corner_type_t> internal::check_corner(std::vector<int32_t> d, int width){
-  HELPER1(v, width, d)
-  HELPER2
-  int orientation = 0;
+std::tuple<int, int> index_rotate(int i, int j, int width, int ninety){
+  if(ninety % 4 == 0) {
+    return std::make_tuple(i, j);
+  } else if(ninety % 4 == 1) {
+    return std::make_tuple(j, width - i - 1); // rotate 90
+  } else if(ninety % 4 == 2) {
+    return std::make_tuple(width - i - 1, width - j - 1); // rotate 180
+  }
+  return std::make_tuple(width - j - 1, i); // rotate 270
+}
+
+void precomp_br(int width, qr_comb_t *comb){
+  for(int i = 0; i < width; i++){
+    for(int j = 0; j < width; j++){
+      printf("%s", comb->extract(j, i) == 1 ? "X" : " ");
+    }
+    printf("\n");
+  }
+  std::vector<std::tuple<int, int> > rotate_mask_pairs;
   for(int k = 0; k < 4; k++){
-    for(int i = 0; i < 7; i++){
-      for(int j = 0; j < 7; j++){
-        bool expected = (
-          (i == 1 && (j != 0 && j != 6)) ||
-          (i == 5 && (j != 0 && j != 6)) ||
-          (j == 1 && (i != 0 && i != 6)) ||
-          (j == 5 && (i != 0 && i != 6))
-        );
-        orientation = k;
-        if(black(i, j, k, expected)) // TODO
-          continue;
-        orientation = -1;
-        break;
+    for(int m = 0; m < masks.size(); m++){
+
+      // Get encoding
+      printf("(%i, %i): ", k, m);
+      uint8_t enc = 0;
+      for(int z = 0; z < 4; z++){
+        enc <<= 1;
+        auto [i, j] = index_rotate(z % 2, z / 2, width, k + 2);
+        uint8_t t = (comb->extract(j, i) ^ mask_v(i + width - 1, j + width - 1, m)) & 1;
+        printf("%i", t);
+        enc += t;
       }
-      if(orientation == -1) break;
+      printf(":%i", enc);
+      if(enc == 1) {
+        rotate_mask_pairs.push_back(std::make_tuple(k, m));
+        printf(" Yes");
+      }
+      printf("\n");
     }
-    if(orientation != -1) break;
   }
-
-  if(orientation == -1) return std::make_tuple(static_cast<orientation_t>(0), static_cast<corner_type_t>(2));
-  
-  bool right = true;
-  bool lower = true;
-  
-  for(int i = 7; i < width; i++){
-    if(black(i, 6, orientation, i % 2 != 1)){
-      right = false;
+  for(int i = 0; i < rotate_mask_pairs.size(); i++){
+    int rotate = std::get<0>(rotate_mask_pairs[i]);
+    int mask = std::get<1>(rotate_mask_pairs[i]);
+    printf("(%i, %i)\n", rotate, mask);
+    for(int i = 0; i < width + 2; i++) printf("#");
+    printf("\n");
+    for(int i_ = 0; i_ < width; i_++){
+      printf("#");
+      for(int j_ = 0; j_ < width; j_++){
+        auto [i, j] = index_rotate(i_, j_, width, rotate);
+        auto [mi, mj] = index_rotate(i_, j_, width, rotate + 2);
+        mi += width - 1;
+        mj += width - 1;
+        uint8_t t = (comb->extract(j, i) ^ mask_v(i + width - 1, j + width - 1, mask)) & 1;
+        printf("%s", t == 1 ? "X" : " ");
+      }
+      printf("#\n");
     }
-    if(black(6, i, orientation, i % 2 != 1)){
-      lower = false;
-    }
-    if(!right && !lower) break;
+    for(int i = 0; i < width + 2; i++) printf("#");
+    printf("\n");
   }
-
-  return std::make_tuple(static_cast<orientation_t>(orientation), static_cast<corner_type_t>((right && lower) ? 0 : ((right) ? 3 : 1)));
 }
 
-
+void qr_comb_t::compute(){
+  precomp_br(width, this);
+}
