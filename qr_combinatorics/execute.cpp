@@ -53,6 +53,6 @@ int main(){
     //t.compute();
     b.compute();
     
-    //wait_for_cuda_end();
+    wait_for_cuda_end();
     return 0;
 }
