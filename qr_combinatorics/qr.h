@@ -13,22 +13,23 @@ constexpr static bool white = false;
 class qr_comb_t {
 public:
   inline qr_comb_t(int size) : width(size) {
-    int memsize = (size * size) / 8 + 1;
+    int memsize = (size * size) / 8 + 1; // Number of bytes to store
     data.reserve(memsize);
 
     for(int i = 0; i < memsize; i++){
-      data[i] = 0;
+      data[i] = 0; // Initialize all values to zero
     }
   }
   
   inline ~qr_comb_t() {}
   
+  /* Helper to facilitate value assignment */
   struct value {
     qr_comb_t *qr;
     int index;
     
     inline operator bool(){
-      return false; // TODO
+      return qr->extract(index, 0);
     }
     
     inline bool operator=(bool b) && {
@@ -41,18 +42,20 @@ public:
     }
   };
   
+  // Value getter/setter
   inline value operator()(int x, int y){
     return value {this, y * width + x};
   }
 
+  // Gets value of qr code at coords (x,y)
   inline uint8_t extract(int x, int y){
     int index = y * width + x;
     return (data[index / 8] >> (index % 8)) & 1;
   }
   
-  void compute();
+  void compute(); // Precomputation
 private:
-  int width;
+  int width; // width of qr code (width x width is the size)
   std::vector<uint8_t> data;
 };
 
