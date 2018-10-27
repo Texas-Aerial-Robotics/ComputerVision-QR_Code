@@ -22,6 +22,16 @@ class qr_comb_t {
         }
 
         inline ~qr_comb_t() {}
+        
+        template <typename ... T>
+        inline void flag(T ... t){
+            flags |= (... | t);
+        }
+
+        template <typename ... T>
+        inline void unflag(T ... t){
+            flags &= ~(... | t);
+        }
 
         /* Helper to facilitate value assignment */
         struct value {
@@ -54,6 +64,7 @@ class qr_comb_t {
     private:
         int width; // width of qr code (width x width is the size)
         std::vector<uint8_t> data;
+        int flags;
 };
 
 void stitch(std::vector<qr_comb_t>);
