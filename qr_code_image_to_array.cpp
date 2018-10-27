@@ -62,5 +62,5 @@ int open_file(string filename) {
 }
 
 int main() {
-		open_file("qrcode1.txt");
+		open_file("Insert file name here!");
 }
