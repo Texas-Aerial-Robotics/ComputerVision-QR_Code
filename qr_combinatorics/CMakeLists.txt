@@ -8,7 +8,7 @@
       OUTPUT_VARIABLE AWD
     )
      
-    add_library(qr STATIC ${AWD}/../qr_combinatorics.cu)
+    add_library(qr STATIC qr_combinatorics_br.cu)
      
     # Request that qr be built with -std=c++11
     # As this is a public compile feature anything that links to 
@@ -23,7 +23,7 @@
     set_target_properties( qr
                            PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
      
-    add_executable(qr_comb execute.cpp qr.cpp)
+    add_executable(qr_comb execute.cpp qr_br.cpp)
     
     set_target_properties(qr_comb PROPERTIES
             CXX_STANDARD 17
