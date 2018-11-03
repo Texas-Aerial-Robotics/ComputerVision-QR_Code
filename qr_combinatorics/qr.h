@@ -10,6 +10,9 @@
 constexpr static bool black = true;
 constexpr static bool white = false;
 
+constexpr static int top = 1 << 0;
+constexpr static int left = 1 << 1;
+
 class qr_comb_t {
     public:
         inline qr_comb_t(int size) : width(size) {
@@ -31,6 +34,10 @@ class qr_comb_t {
         template <typename ... T>
         inline void unflag(T ... t){
             flags &= ~(... | t);
+        }
+
+        inline bool get_flag(int t){
+            return (flags & t) != 0;
         }
 
         /* Helper to facilitate value assignment */
@@ -61,6 +68,9 @@ class qr_comb_t {
         }
 
         void compute(); // Precomputation
+
+        inline getWidth() {return width;}
+
     private:
         int width; // width of qr code (width x width is the size)
         std::vector<uint8_t> data;
