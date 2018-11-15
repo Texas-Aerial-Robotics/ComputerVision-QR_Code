@@ -57,7 +57,17 @@ void precomp_br(int width, qr_comb_t *comb, std::vector<uint16_t>& values) {
               mask_v(i_ + width - 1, j_ + width - 1, mask)) &
              1;
     };
-
+    /*
+    printf("-----------");
+    for(int i = 0; i < 11; i++){
+      for(int j = 0; j < 11; j++){
+        auto t = (*comb)(j, i);
+        printf("%s", t ? "#" : " ");
+      }
+      printf("\n");
+    }
+    printf("-----------");
+    */
     auto read_codeword_up = [&](int _i, int _j) -> uint8_t {
       if (_i == 0 && _j == 0)
         ;
@@ -162,6 +172,13 @@ void compute_num(const std::array<uint8_t, 18> &data, uint8_t changes,
 }
 
 void cpu_br(std::array<uint8_t, 18> &data, int width, std::vector<uint16_t>& values) {
+  /*
+  printf("Keywords: ");
+  for(int i = 0; i < 18; i++){
+    printf("%s%i", i == 0 ? "" : ", ", data[i]);
+  }
+  printf("\n");
+  */
   for (uint8_t i = 0; i <= 0x0f; i++) {
     compute_num(data, i, values);
   }
