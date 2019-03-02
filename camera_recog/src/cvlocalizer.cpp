@@ -23,6 +23,10 @@ template <typename T, typename T2> void dist(cv::Point pt, T &pts, T2 &areas) {
   }
 }
 
+double dist(cv::Point p1, cv::Point p2){
+  return sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y));
+}
+
 localize_out localize(cv::Mat &m, cv::Mat &output) {
 
   std::set<uint16_t> ret;
@@ -66,7 +70,23 @@ localize_out localize(cv::Mat &m, cv::Mat &output) {
       pts.emplace_back(false, cv::Point(x, y));
     }
   }
+  /*
+  if(pts.size() > 2){
 
+  double avg = 0;
+  for(int i = 0; i < pts.size(); i++){
+    cv::Point cp = pts[i == 0 ? 1 : 0];
+    for(int j = 1; j < pts.size(); j++){
+      
+    }
+  }
+  avg /= pts.size() * pts.size();
+
+  std::cout << avg << std::endl;
+  
+  }
+  */
+  if(pts.size() > 5000) return { };
   for (int i = 0; i < pts.size(); i++) {
     if (pts[i].first)
       continue;
