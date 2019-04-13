@@ -15,6 +15,16 @@ namespace qr {
 constexpr static bool black = true;
 constexpr static bool white = false;
 
+class qr_t;
+
+struct qr_status {
+  std::vector<cv::Mat> contributors_img;
+  std::vector<qr_t> contributors_read;
+  bool dirtyflag;
+  
+  std::vector<uint16_t> compute();
+};
+
 class qr_t {
 public:
   /** \brief Constructor
@@ -120,17 +130,26 @@ class computed_qr_t {
 public:
   inline computed_qr_t(qr_t &code) : m_code(code) { compute_flags(); }
   inline ~computed_qr_t() = default;
+  
+  inline computed_qr_t(const computed_qr_t& q) : m_code(q.m_code), m_orientation(q.m_orientation), m_type(q.m_type) {}
 
+  inline computed_qr_t& operator=(const computed_qr_t& q){
+    m_code = q.m_code;
+    m_orientation = q.m_orientation;
+    m_type = q.m_type;
+  }
+  
   bool test_str(std::string);
 
   std::vector<uint16_t> compute();
 
   const qr_t &code() { return m_code; }
-
+  
 private:
   qr_t &m_code;
   computed_qr_orientation_t m_orientation = computed_qr_orientation_t::UNKNOWN;
   computed_qr_type_t m_type = computed_qr_type_t::UNKNOWN;
+  friend struct qr_status;
 
   void compute_flags();
 };
@@ -253,11 +272,29 @@ inline bool qr::computed_qr_t::test_str(std::string str) {
   return false;
 }
 
-struct localize_out {
-  std::vector<uint16_t> values;
-  std::vector<cv::Mat> images;
-};
+void localize(cv::Mat &, cv::Mat &, qr::qr_status& );
 
-localize_out localize(cv::Mat &, cv::Mat &);
+inline std::vector<uint16_t> qr::qr_status::compute(){
+  std::vector<qr::computed_qr_t> computed;
+  computed.reserve(contributors_read.size());
+  for(int i = 0; i < contributors_read.size(); i++){
+    computed.emplace_back(contributors_read[i]);
+  }
+  std::vector<uint16_t> values;
+  for(int i = 0; i < computed.size(); i++){
+    auto& q = computed[i];
+    if(q.m_type == qr::computed_qr_type_t::CORNERLESS){
+      auto list = q.compute();
+      for(int j = 0; j < list.size(); j++){
+        values.push_back(list[j]);
+      }
+      computed.erase(computed.begin() + i); // Remove all bottom right corners for future loops
+      i--;
+    }
+  }
+  for(int i = 0; i < computed.size(); i++){
+    //TODO other corner types
+  }
+}
 
 #endif

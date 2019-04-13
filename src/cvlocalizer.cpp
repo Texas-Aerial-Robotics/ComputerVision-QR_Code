@@ -27,11 +27,7 @@ double dist(cv::Point p1, cv::Point p2){
   return sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y));
 }
 
-localize_out localize(cv::Mat &m, cv::Mat &output) {
-
-  std::set<uint16_t> ret;
-
-  std::vector<cv::Mat> images;
+void localize(cv::Mat &m, cv::Mat &output, qr::qr_status& status) {
 
   cv::Mat d, r;
 
@@ -86,7 +82,7 @@ localize_out localize(cv::Mat &m, cv::Mat &output) {
   
   }
   */
-  if(pts.size() > 5000) return { };
+  if(pts.size() > 5000) return;
   for (int i = 0; i < pts.size(); i++) {
     if (pts[i].first)
       continue;
@@ -170,24 +166,16 @@ localize_out localize(cv::Mat &m, cv::Mat &output) {
       }
     }
 
+    status.contributors_read.push_back(q);
+    
     qr::computed_qr_t comp(q);
 
     auto list = comp.compute();
 
-    // std::cout << q << std::endl;
-
-    for(int i = 0; i < list.size(); i++){
-      ret.insert(list[i]);
-    }
-
-    images.push_back(transformed);
-
-    // imshow("test", tfcopy);
+    status.contributors_img.push_back(transformed);
+    
+    status.dirtyflag = true;
   }
 
-  // std::cout << "----" << std::endl;
-
-  std::vector<uint16_t> cop(ret.begin(), ret.end());
-
-  return {cop, images};
+  return;
 }
