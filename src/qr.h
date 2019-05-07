@@ -27,6 +27,7 @@ struct qr_status {
 
 class qr_t {
 public:
+	int mask;
   /** \brief Constructor
    \param width number of rows in the qr code (should be same as the number of
    columns)
@@ -40,7 +41,7 @@ public:
       }()), // This allocates exactly as much memory (ceiled
                               // to a multiple of 8) as needed.
         m_width(width), m_ver(ver) {}
-  /** \breif Default Destructor */
+  /** \brief Default Destructor */
   inline ~qr_t() = default;
 
   inline qr_t(qr_t &&) = default;
@@ -281,20 +282,16 @@ inline std::vector<uint16_t> qr::qr_status::compute(){
     computed.emplace_back(contributors_read[i]);
   }
   std::vector<uint16_t> values;
+  auto tr_case = [&](){
+
+  };
   for(int i = 0; i < computed.size(); i++){
-    auto& q = computed[i];
-    if(q.m_type == qr::computed_qr_type_t::CORNERLESS){
-      auto list = q.compute();
-      for(int j = 0; j < list.size(); j++){
-        values.push_back(list[j]);
-      }
-      computed.erase(computed.begin() + i); // Remove all bottom right corners for future loops
-      i--;
+    if(computed[i].m_type == qr::computed_qr_type_t::BRIDGE_BOTTOM){
+    	tr_case(); return;
     }
   }
-  for(int i = 0; i < computed.size(); i++){
-    //TODO other corner types
-  }
+  /* If we didn't find a top-right corner, just add all of the other values */
+  
 }
 
 #endif

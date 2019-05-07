@@ -98,6 +98,7 @@ void comp(int width, qr::qr_t q, std::vector<uint16_t>& dat){
           x = extract(bit_idx, 4);
           if(x >= 10) continue;
           dat.push_back(k * 10 + x);
+          q.mask = mask;
         }
       }
     }
